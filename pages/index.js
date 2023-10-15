@@ -6,6 +6,7 @@ import { styled } from "styled-components";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { Doughnut, getElementAtEvent } from "react-chartjs-2";
 import axios from "axios";
+import { GithubPicker } from "react-color";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -29,28 +30,34 @@ const Container = styled.div`
   height: 100vh;
 `;
 
+const ColorDiv = styled.div`
+  height: 20px;
+  width: 20px;
+  background-color: ${({ value }) => value};
+  border: ${({ value }) => `1px solid ${value.replace(/[^,]+(?=\))/, 1)}`};
+`;
+
+const Popover = styled.div`
+  position: "absolute";
+  zindex: "2";
+`;
+
+const Cover = styled.div`
+  position: "fixed";
+  top: "0px";
+  right: "0px";
+  bottom: "0px";
+  left: "0px";
+`;
+
 export const initialData = {
-  labels: ["Outside food", "Trip", "Veggies", "Fruit", "Purple", "Orange"],
+  labels: [],
   datasets: [
     {
       label: "Amount spent",
-      data: [12, 19, 3, 5, 2, 3],
-      backgroundColor: [
-        "rgba(255, 99, 132, 0.2)",
-        "rgba(54, 162, 235, 0.2)",
-        "rgba(255, 206, 86, 0.2)",
-        "rgba(75, 192, 192, 0.2)",
-        "rgba(153, 102, 255, 0.2)",
-        "rgba(255, 159, 64, 0.2)",
-      ],
-      borderColor: [
-        "rgba(255, 99, 132, 1)",
-        "rgba(54, 162, 235, 1)",
-        "rgba(255, 206, 86, 1)",
-        "rgba(75, 192, 192, 1)",
-        "rgba(153, 102, 255, 1)",
-        "rgba(255, 159, 64, 1)",
-      ],
+      data: [],
+      backgroundColor: [],
+      borderColor: [],
       borderWidth: 1,
     },
   ],
@@ -61,18 +68,34 @@ export default function Home() {
   const [value, setValue] = useState(0);
   const [data, setData] = useState(initialData);
   const [mounted, setMounted] = useState(false);
+  const [displayColorPicker, setDisplayColorPicker] = useState([]);
 
+  console.log(displayColorPicker);
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => chartRef?.current && chartRef.current.update(), [data]);
+
   useEffect(() => {
     axios
       .get(
         "https://us-central1-budgie-41b5b.cloudfunctions.net/api/read/category"
       )
       .then((res) => {
-        console.log(res);
+        console.log(res.data);
+        const tempData = data;
+        res.data.map((each, index) => {
+          tempData.labels[index] = each.id;
+          tempData.datasets[0].data[index] = each.value;
+          tempData.datasets[0].backgroundColor[index] = each.color;
+          tempData.datasets[0].borderColor[index] = each.color;
+        });
+
+        setData(data);
+        setDisplayColorPicker(Array(data.length).fill(false));
       })
+      .then(() => chartRef.current.update())
       .catch((err) => {
         console.log(err);
       });
@@ -97,9 +120,36 @@ export default function Home() {
     setData(temp);
     chartRef.current.update();
     setValue(0);
+
+    axios.put(
+      `https://us-central1-budgie-41b5b.cloudfunctions.net/api/update/category/${data.labels[index]}`,
+      {
+        key: "value",
+        value: Number(tempData) + Number(value),
+      }
+    );
   };
 
   console.log(data);
+
+  const handleColorPick = (color, index) => {
+    const temp = Array(displayColorPicker.length).fill(false);
+    setDisplayColorPicker(temp);
+    const tempData = data;
+    console.log(color.rgb);
+    const { r, g, b, a } = color.rgb;
+    tempData.datasets[0].backgroundColor[index] = `rgba(${r},${g},${b},${a})`;
+    setData(tempData);
+    chartRef.current.update();
+
+    axios.put(
+      `https://us-central1-budgie-41b5b.cloudfunctions.net/api/update/category/${data.labels[index]}`,
+      {
+        key: "color",
+        value: `rgba(${r},${g},${b},${a})`,
+      }
+    );
+  };
 
   return (
     <div>
@@ -115,8 +165,39 @@ export default function Home() {
           onChange={handleChange}
           value={value}
         />
+
         <Doughnut data={data} ref={chartRef} onClick={onClick} redraw={true} />
       </Container>
+      {/* <GithubPicker /> */}
+      {data.labels.map((each, index) => (
+        <div>
+          <span>{each}</span>
+          <ColorDiv
+            value={data.datasets[0].backgroundColor[index]}
+            onClick={() => {
+              let temp = displayColorPicker;
+              temp = Array(temp.length).fill(false);
+              temp[index] = true;
+              setDisplayColorPicker(temp);
+              console.log("asdasd: ", temp);
+            }}
+          />
+          {displayColorPicker[index] ? (
+            <Popover key={index}>
+              <Cover
+                onClick={() => {
+                  let temp = displayColorPicker;
+                  temp = Array(temp.length).fill(false);
+                  setDisplayColorPicker(temp);
+                }}
+              />
+              <GithubPicker
+                onChangeComplete={(color) => handleColorPick(color, index)}
+              />
+            </Popover>
+          ) : null}
+        </div>
+      ))}
 
       <footer></footer>
     </div>
