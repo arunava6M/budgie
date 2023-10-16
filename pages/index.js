@@ -6,13 +6,16 @@ import { styled } from "styled-components";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { Doughnut, getElementAtEvent } from "react-chartjs-2";
 import axios from "axios";
-import { GithubPicker } from "react-color";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
+const PageWrapper = styled.div`
+  margin: 0;
+  padding: 0;
+`;
 const Input = styled.input`
   position: absolute;
-  top: 10%;
+  top: 15%;
   border: none;
   outline: none;
   padding: 10px;
@@ -21,33 +24,32 @@ const Input = styled.input`
   height: 20px;
   outline: none;
   border: 1px solid rgba(255, 99, 132, 0.2);
+  box-shadow: -3px 4px 1px 1px black;
 `;
 
 const Container = styled.div`
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 100vh;
+  padding: 20px;
+  position: relative;
 `;
 
-const ColorDiv = styled.div`
-  height: 20px;
-  width: 20px;
-  background-color: ${({ value }) => value};
-  border: ${({ value }) => `1px solid ${value.replace(/[^,]+(?=\))/, 1)}`};
+const DoughnutShadow = styled.div`
+  background-color: white;
+  position: absolute;
+  height: 275px;
+  width: 275px;
+  top: 212px;
+  border-radius: 50%;
+  border: 4px solid black;
+  box-shadow: -4px 12px 1px 1px black;
 `;
 
-const Popover = styled.div`
-  position: "absolute";
-  zindex: "2";
-`;
-
-const Cover = styled.div`
-  position: "fixed";
-  top: "0px";
-  right: "0px";
-  bottom: "0px";
-  left: "0px";
+const DoughnutContainer = styled.div`
+  z-index: 100;
 `;
 
 export const initialData = {
@@ -69,6 +71,7 @@ export default function Home() {
   const [data, setData] = useState(initialData);
   const [mounted, setMounted] = useState(false);
   const [displayColorPicker, setDisplayColorPicker] = useState([]);
+  // const router = useRouter();
 
   console.log(displayColorPicker);
   useEffect(() => {
@@ -132,27 +135,8 @@ export default function Home() {
 
   console.log(data);
 
-  const handleColorPick = (color, index) => {
-    const temp = Array(displayColorPicker.length).fill(false);
-    setDisplayColorPicker(temp);
-    const tempData = data;
-    console.log(color.rgb);
-    const { r, g, b, a } = color.rgb;
-    tempData.datasets[0].backgroundColor[index] = `rgba(${r},${g},${b},${a})`;
-    setData(tempData);
-    chartRef.current.update();
-
-    axios.put(
-      `https://us-central1-budgie-41b5b.cloudfunctions.net/api/update/category/${data.labels[index]}`,
-      {
-        key: "color",
-        value: `rgba(${r},${g},${b},${a})`,
-      }
-    );
-  };
-
   return (
-    <div>
+    <PageWrapper>
       <Head>
         <title>Create Next App</title>
         <link rel="icon" href="/favicon.ico" />
@@ -166,40 +150,18 @@ export default function Home() {
           value={value}
         />
 
-        <Doughnut data={data} ref={chartRef} onClick={onClick} redraw={true} />
-      </Container>
-      {/* <GithubPicker /> */}
-      {data.labels.map((each, index) => (
-        <div>
-          <span>{each}</span>
-          <ColorDiv
-            value={data.datasets[0].backgroundColor[index]}
-            onClick={() => {
-              let temp = displayColorPicker;
-              temp = Array(temp.length).fill(false);
-              temp[index] = true;
-              setDisplayColorPicker(temp);
-              console.log("asdasd: ", temp);
-            }}
+        <DoughnutContainer>
+          <Doughnut
+            borderWidth={"5px"}
+            borderColor="black"
+            data={data}
+            ref={chartRef}
+            onClick={onClick}
+            redraw={true}
           />
-          {displayColorPicker[index] ? (
-            <Popover key={index}>
-              <Cover
-                onClick={() => {
-                  let temp = displayColorPicker;
-                  temp = Array(temp.length).fill(false);
-                  setDisplayColorPicker(temp);
-                }}
-              />
-              <GithubPicker
-                onChangeComplete={(color) => handleColorPick(color, index)}
-              />
-            </Popover>
-          ) : null}
-        </div>
-      ))}
-
-      <footer></footer>
-    </div>
+        </DoughnutContainer>
+        <DoughnutShadow />
+      </Container>
+    </PageWrapper>
   );
 }
