@@ -40,16 +40,23 @@ const Container = styled.div`
 const DoughnutShadow = styled.div`
   background-color: white;
   position: absolute;
-  height: 275px;
-  width: 275px;
-  top: 212px;
+  height: 265px;
+  width: 265px;
+  left: 20px;
+  bottom: 0px;
   border-radius: 50%;
   border: 4px solid black;
   box-shadow: -4px 12px 1px 1px black;
+  // z-index: 10;
 `;
 
 const DoughnutContainer = styled.div`
+  position: relative;
   z-index: 100;
+`;
+
+const ChartWrapper = styled.div`
+  position: relative;
 `;
 
 export const initialData = {
@@ -150,17 +157,19 @@ export default function Home() {
           value={value}
         />
 
-        <DoughnutContainer>
-          <Doughnut
-            borderWidth={"5px"}
-            borderColor="black"
-            data={data}
-            ref={chartRef}
-            onClick={onClick}
-            redraw={true}
-          />
-        </DoughnutContainer>
-        <DoughnutShadow />
+        <ChartWrapper>
+          <DoughnutContainer>
+            <Doughnut
+              borderWidth={"5px"}
+              borderColor="black"
+              data={data}
+              ref={chartRef}
+              onClick={onClick}
+              redraw={true}
+            />
+          </DoughnutContainer>
+          <DoughnutShadow />
+        </ChartWrapper>
       </Container>
     </PageWrapper>
   );
