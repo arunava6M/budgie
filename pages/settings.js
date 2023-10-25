@@ -38,6 +38,11 @@ const ItemContainer = styled.div`
   box-shadow: -1px 2px 1px 1px black;
 `;
 
+const Text = styled.p`
+  font-weight: 500;
+  font-size: 15px;
+`;
+
 export const initialData = {
   labels: [],
   datasets: [
@@ -98,7 +103,8 @@ const SettingsPage = () => {
   console.log(data.datasets[0]);
 
   return (
-    <div>
+    <>
+      <Text>Change category colors</Text>
       {data.labels.map((each, index) => (
         <ItemContainer color={data.datasets[0].backgroundColor[index]}>
           <span>{each}</span>
@@ -127,7 +133,7 @@ const SettingsPage = () => {
           ) : null}
         </ItemContainer>
       ))}
-    </div>
+    </>
   );
 };
 

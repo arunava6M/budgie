@@ -6,6 +6,8 @@ import { styled } from "styled-components";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { Doughnut, getElementAtEvent } from "react-chartjs-2";
 import axios from "axios";
+import { removeRupeeSymbol } from "../utils/helpers";
+import { Banner } from "../components/Banner";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -14,14 +16,13 @@ const PageWrapper = styled.div`
   padding: 0;
 `;
 const Input = styled.input`
-  position: absolute;
-  top: 15%;
+  margin-bottom: 50px;
   border: none;
   outline: none;
   padding: 10px;
   border-radius: 8px;
   width: 150px;
-  height: 20px;
+  height: 30px;
   outline: none;
   border: 1px solid rgba(255, 99, 132, 0.2);
   box-shadow: -3px 4px 1px 1px black;
@@ -40,23 +41,28 @@ const Container = styled.div`
 const DoughnutShadow = styled.div`
   background-color: white;
   position: absolute;
-  height: 265px;
-  width: 265px;
+  height: 300px;
+  width: 90%;
   left: 20px;
   bottom: 0px;
-  border-radius: 50%;
+  border-radius: 8px;
   border: 4px solid black;
   box-shadow: -4px 12px 1px 1px black;
-  // z-index: 10;
 `;
 
 const DoughnutContainer = styled.div`
   position: relative;
-  z-index: 100;
+  height: 250px;
 `;
 
 const ChartWrapper = styled.div`
-  position: relative;
+  background-color: white;
+  padding: 10px;
+  left: 20px;
+  bottom: 0px;
+  border-radius: 8px;
+  border: 4px solid black;
+  box-shadow: -4px 12px 1px 1px black;
 `;
 
 export const initialData = {
@@ -74,12 +80,11 @@ export const initialData = {
 
 export default function Home() {
   const chartRef = useRef();
-  const [value, setValue] = useState(0);
+  const [amount, setAmount] = useState(null);
   const [data, setData] = useState(initialData);
   const [mounted, setMounted] = useState(false);
   const [displayColorPicker, setDisplayColorPicker] = useState([]);
-  // const router = useRouter();
-
+  const [error, setError] = useState("");
   console.log(displayColorPicker);
   useEffect(() => {
     setMounted(true);
@@ -116,32 +121,44 @@ export default function Home() {
   }
 
   const handleChange = (event) => {
-    setValue(event.target.value);
+    setAmount(event.target.value);
   };
 
   const onClick = (event) => {
-    console.log("df: ", getElementAtEvent(chartRef.current, event));
+    const actualAmount = removeRupeeSymbol(amount);
+    if (parseFloat(amount) === NaN) {
+      setError("Buddy, please enter only numbers !");
+      return null;
+    }
+    // console.log("df: ", getElementAtEvent(chartRef.current, event));
     const index = getElementAtEvent(chartRef.current, event)[0]?.index;
-    console.log(index);
+    // console.log(index);
     setData({});
     const temp = data;
     let tempData = data.datasets[0].data[index];
-    temp.datasets[0].data[index] = Number(tempData) + Number(value);
+    temp.datasets[0].data[index] = Number(tempData) + actualAmount;
     setData(temp);
     chartRef.current.update();
-    setValue(0);
+    setAmount(0);
 
     axios.put(
       `https://us-central1-budgie-41b5b.cloudfunctions.net/api/update/category/${data.labels[index]}`,
       {
         key: "value",
-        value: Number(tempData) + Number(value),
+        value: Number(tempData) + actualAmount,
       }
     );
   };
 
   console.log(data);
 
+  const renderAmountValue = () => {
+    if (amount && /\d/.test(amount)) {
+      console.log(amount);
+      return `₹ ${removeRupeeSymbol(amount)}`;
+    }
+    return null;
+  };
   return (
     <PageWrapper>
       <Head>
@@ -150,25 +167,19 @@ export default function Home() {
       </Head>
 
       <Container>
+        {error && <Banner>{error}</Banner>}
         <Input
           type="text"
-          placeholder="amount"
+          placeholder="₹"
           onChange={handleChange}
-          value={value}
+          value={renderAmountValue()}
         />
 
         <ChartWrapper>
           <DoughnutContainer>
-            <Doughnut
-              borderWidth={"5px"}
-              borderColor="black"
-              data={data}
-              ref={chartRef}
-              onClick={onClick}
-              redraw={true}
-            />
+            <Doughnut data={data} ref={chartRef} onClick={onClick} />
           </DoughnutContainer>
-          <DoughnutShadow />
+          {/* <DoughnutShadow /> */}
         </ChartWrapper>
       </Container>
     </PageWrapper>

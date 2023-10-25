@@ -1,6 +1,8 @@
 "use client";
 import { styled } from "styled-components";
 import Router, { useRouter } from "next/router";
+import { BsBarChartFill } from "react-icons/bs";
+import { AiTwotoneSetting } from "react-icons/ai";
 
 const Container = styled.div`
   display: flex;
@@ -23,7 +25,7 @@ const NavigationWrapper = styled.div`
 
 const Navigator = styled.div`
   width: 50%;
-  height: 20px;
+  height: 30px;
   position: absolute;
   padding: 5px;
   display: flex;
@@ -52,9 +54,9 @@ const FooterWrapper = styled.footer`
   width: 100%;
   position: absolute;
   padding: 10px 10px;
-  display: flex:
-  justify-content: space-between;
-  bottom: 20px;
+  display: flex;
+  justify-content: flex-end;
+  bottom: 100px;
   left: 0px;
   right: 0px;
 `;
@@ -73,7 +75,7 @@ export const PageWrapper = ({ children }) => {
               Router.push("/");
             }}
           >
-            a
+            <BsBarChartFill />
           </LeftNavigator>
           <RightNavigator
             active={router.pathname === "/settings"}
@@ -81,7 +83,7 @@ export const PageWrapper = ({ children }) => {
               Router.push("/settings");
             }}
           >
-            b
+            <AiTwotoneSetting />
           </RightNavigator>
         </NavigationWrapper>
       </FooterWrapper>
